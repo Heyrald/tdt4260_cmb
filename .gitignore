@@ -1,2 +1,8 @@
 *.o
 .nfs00000000ec69071a00000011
+*.ppm
+checker
+image_processing_c
+image_processing_reference
+*.data
+*.old
