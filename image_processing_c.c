@@ -37,17 +37,14 @@ AccurateImage *convertToAccurateImage(PPMImage *image)
 	return imageAccurate;
 }
 
-// blur one color channel
 void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int size)
 {
-	;
-	;
 	// Iterate over each pixel
 	#pragma omp parallel for 
 	for (int senterY = 0; senterY < imageIn->y; senterY++)
 	{
 		int outerY = imageOut->x * senterY;
-		double sum[3] ={0, 0, 0};
+		double sum[3] = {0, 0, 0};
 		int countIncluded = 0;
 		//Start up the left side
 		for (int y = -size; y <= size; y++) {
