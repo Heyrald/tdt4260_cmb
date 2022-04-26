@@ -13,3 +13,9 @@ Runtime: 53 seconds. See that blurIteration takes 99.05% of the runtime. Can pro
 5: Made the multiplication between imagein->x and CurrentY, and imageOut->x and senterY be multiplied when they are updated. New runtime: 36 seconds. Probably already fixed in compiler. Decision: Keep.
 
 6: Stopped blurring the edges as described in the box blur Wikipedia article. New runtime 23 seconds. Decision: Too many errors.
+
+7: Rewrote blurIteration to not be colour dependent. New runtime: 9.45 seconds. Decision: Keep.
+
+8: Changed double to float. New runtime: 9.45 seconds. Decision: more errors, same time. Throw.
+
+9: Made program multithreaded. New runtime: 10.25 seconds. Decision: Keep. Lower CMB runtime.

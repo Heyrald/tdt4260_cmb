@@ -40,113 +40,20 @@ AccurateImage *convertToAccurateImage(PPMImage *image)
 // blur one color channel
 void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int size)
 {
-	/*printf("Start 1\n");
-	int divisor = size + 1;
-	for (int y = 0; y < imageIn->y; y++)
-	{	
-		int yLevel = y * imageOut->x;
-		printf("%d", y);
-
-		printf("Help?");
-		//Add the three outermost squares to the sum.
-
-		double sum = 0;
-
-		for(int tempX = 0; tempX <= size; tempX++)
-		{
-			printf("Here %d?\n", tempX + yLevel);
-			switch (colourType)
-			{
-			case 0:
-				sum += imageIn->data[tempX + yLevel].red;
-				break;
-			case 1:
-				sum += imageIn->data[tempX + yLevel].green;
-				break;
-			case 2:
-				sum += imageIn->data[tempX + yLevel].blue;
-				break;
-			default:
-				break;
-			}
-			printf("Sum: %f Ever here?\n", sum);
-		}
-		printf("Error here?");
-		switch (colourType)
-		{
-		case 0:
-			imageOut->data[0 + yLevel].red = sum / divisor;
-			break;
-		case 1:
-			imageOut->data[0 + yLevel].green = sum / divisor;
-			break;
-		case 2:
-			imageOut->data[0 + yLevel].blue = sum / divisor;
-			break;
-		default:
-			break;
-		}
-
-		//Add the two last cells.
-		for (int tempX = size + 1; tempX <= 2 * size + 1; tempX++)
-		{
-			divisor++;
-			switch (colourType)
-			{
-			case 0:
-				sum += imageIn->data[tempX + yLevel].red;
-				imageOut->data[tempX - size].red = sum / divisor;
-				break;
-			case 1:
-				sum += imageIn->data[tempX + yLevel].green;
-				imageOut->data[tempX - size + yLevel].green = sum / divisor;
-				break;
-			case 2:
-				sum += imageIn->data[tempX + yLevel].blue;
-				imageOut->data[tempX - size + yLevel].blue = sum / divisor;
-				break;
-			default:
-				break;
-			}
-		}
-
-		//Go through every intermediate cell.
-		for (int x = size; x < imageIn->x - size; x++)
-		{
-		switch (colourType)
-			{
-			case 0:
-				sum -= imageIn->data[x - size - 1 + yLevel].red;
-				sum += imageIn->data[x + size + yLevel].red;
-				imageOut->data[x + yLevel].red = sum / divisor;
-				break;
-			case 1:
-				sum -= imageIn->data[x - size - 1 + yLevel].green;
-				sum += imageIn->data[x + size + yLevel].green;
-				imageOut->data[x + yLevel].green = sum / divisor;
-				break;
-			case 2:
-				sum -= imageIn->data[x - size - 1 + yLevel].blue;
-				sum += imageIn->data[x + size + yLevel].blue;
-				imageOut->data[x + yLevel].blue = sum / divisor;
-				break;
-			default:
-				break;
-			}
-		}
-	}*/
-
 	// Iterate over each pixel
-	//#pragma omp parallel for
+	#pragma omp parallel for collapse(2) schedule(dynamic, 8)
 	for (int senterY = 0; senterY < imageIn->y; senterY++)
 	{
-		int outerY = imageOut->x * senterY;
 		for (int senterX = 0; senterX < imageIn->x; senterX++)
 		{
+			int outerY = imageOut->x * senterY;
 			// For each pixel we compute the magic number
 			double sum[3] = {0, 0, 0};
 
 			int countIncluded = 0;
+
+			
+
 			for (int y = -size; y <= size; y++)
 			{
 				int currentY = senterY + y;
@@ -259,10 +166,18 @@ PPMImage *imageDifference(AccurateImage *imageInSmall, AccurateImage *imageInLar
 	return imageOut;
 }
 
-int main()
+int main(int argc, char** argv)
 {
-	PPMImage *image;
-	image = readPPM("flower.ppm");
+    // read image
+    PPMImage *image;
+    // select where to read the image from
+    if(argc > 1) {
+        // from file for debugging (with argument)
+        image = readPPM("flower.ppm");
+    } else {
+        // from stdin for cmb
+        image = readStreamPPM(stdin);
+    }
 
 	AccurateImage *imageAccurate1_tiny = convertToAccurateImage(image);
 	AccurateImage *imageAccurate2_tiny = convertToAccurateImage(image);
@@ -310,12 +225,19 @@ int main()
 
 
 	// Save the images.
+	// calculate difference
 	PPMImage *final_tiny = imageDifference(imageAccurate2_tiny, imageAccurate2_small);
-	writePPM("flower_tiny.ppm", final_tiny);
-
-	PPMImage *final_small = imageDifference(imageAccurate2_small, imageAccurate2_medium);
-	writePPM("flower_small.ppm", final_small);
-
-	PPMImage *final_medium = imageDifference(imageAccurate2_medium, imageAccurate2_large);
-	writePPM("flower_medium.ppm", final_medium);
+    PPMImage *final_small = imageDifference(imageAccurate2_small, imageAccurate2_medium);
+    PPMImage *final_medium = imageDifference(imageAccurate2_medium, imageAccurate2_large);
+	
+	// Save the images.
+    if(argc > 1) {
+        writePPM("flower_tiny.ppm", final_tiny);
+        writePPM("flower_small.ppm", final_small);
+        writePPM("flower_medium.ppm", final_medium);
+    } else {
+        writeStreamPPM(stdout, final_tiny);
+        writeStreamPPM(stdout, final_small);
+        writeStreamPPM(stdout, final_medium);
+    }
 }
