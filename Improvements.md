@@ -19,3 +19,5 @@ Runtime: 53 seconds. See that blurIteration takes 99.05% of the runtime. Can pro
 8: Changed double to float. New runtime: 9.45 seconds. Decision: more errors, same time. Throw.
 
 9: Made program multithreaded. New runtime: 10.25 seconds. Decision: Keep. Lower CMB runtime.
+
+10: Stopped summing every surrounding pixel to the sum value, and instead just add the new values, and remove the old. New runtime: 1.75 seconds. Decision: Keep.

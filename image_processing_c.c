@@ -40,45 +40,55 @@ AccurateImage *convertToAccurateImage(PPMImage *image)
 // blur one color channel
 void blurIteration(AccurateImage *imageOut, AccurateImage *imageIn, int size)
 {
+	;
+	;
 	// Iterate over each pixel
-	#pragma omp parallel for collapse(2) schedule(dynamic, 8)
+	#pragma omp parallel for 
 	for (int senterY = 0; senterY < imageIn->y; senterY++)
 	{
+		int outerY = imageOut->x * senterY;
+		double sum[3] ={0, 0, 0};
+		int countIncluded = 0;
+		//Start up the left side
+		for (int y = -size; y <= size; y++) {
+			int currentY = senterY + y;
+			if (currentY < 0 || currentY >= imageIn->y)
+				continue;
+			int innerY = currentY * imageIn->x;
+			for (int x = 0; x < size; x++){
+				int offsetOfThePixel = (innerY + x);
+				sum[0] += imageIn->data[offsetOfThePixel].red;
+				sum[1] += imageIn->data[offsetOfThePixel].green;
+				sum[2] += imageIn->data[offsetOfThePixel].blue;
+				countIncluded++;
+			}
+		}
+
 		for (int senterX = 0; senterX < imageIn->x; senterX++)
 		{
-			int outerY = imageOut->x * senterY;
-			// For each pixel we compute the magic number
-			double sum[3] = {0, 0, 0};
-
-			int countIncluded = 0;
-
-			
-
 			for (int y = -size; y <= size; y++)
 			{
 				int currentY = senterY + y;
+				if (currentY >= 0 && currentY < imageIn->y){
+					int innerY = currentY * imageIn->x;
+					int frontX = senterX + size;
+					int backX = senterX - size - 1;
 
-				// Check if we are outside the bounds
-				if (currentY < 0 || currentY >= imageIn->y)
-					continue;
+					if (frontX < imageIn->x) {
+						int offsetOfThePixel = (innerY + frontX);
+						sum[0] += imageIn->data[offsetOfThePixel].red;
+						sum[1] += imageIn->data[offsetOfThePixel].green;
+						sum[2] += imageIn->data[offsetOfThePixel].blue;
+						countIncluded++;
+					}
 
-				int innerY = currentY * imageIn->x;
-
-				for (int x = -size; x <= size; x++)
-				{
-					int currentX = senterX + x;
-
-					if (currentX < 0 || currentX >= imageIn->x)
-						continue;
-
-					// Now we can begin
-					int offsetOfThePixel = (innerY + currentX);
-					sum[0] += imageIn->data[offsetOfThePixel].red;
-					sum[1] += imageIn->data[offsetOfThePixel].green;
-					sum[2] += imageIn->data[offsetOfThePixel].blue;
-
-					// Keep track of how many values we have included
-					countIncluded++;
+					if (backX >= 0) {
+						int offsetOfThePixel = (innerY + backX);
+						sum[0] -= imageIn->data[offsetOfThePixel].red;
+						sum[1] -= imageIn->data[offsetOfThePixel].green;
+						sum[2] -= imageIn->data[offsetOfThePixel].blue;
+						countIncluded--;
+					}
 				}
 			}
 
